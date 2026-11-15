@@ -1,0 +1,12 @@
+from fastapi import FastAPI
+
+from app.api.health import router as health_router
+from app.api.chat import router as chat_router
+from app.api.chat_api import router as chatapi_router
+from app.api.user import router as user_out
+
+app = FastAPI(title="Chat API")
+app.include_router(health_router)
+app.include_router(chat_router)
+app.include_router(chatapi_router)
+app.include_router(user_out)
