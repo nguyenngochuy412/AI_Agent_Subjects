@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_current_user_id
 from app.db.session import get_db
 from app.models.message import Message
 from app.schemas.chat import ChatRequest, ChatResponse, HistoryResponse, MessageOut
@@ -10,21 +11,26 @@ router = APIRouter()
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(payload: ChatRequest, db: AsyncSession = Depends(get_db)) -> ChatResponse:
-    reply="Chao ban"
+async def chat(
+    payload: ChatRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> ChatResponse:
+    reply = "Chào bạn"
     db.add_all(
         [
-            Message(user_id=payload.user_id, role="user", content=payload.message),
-            Message(user_id=payload.user_id, role="assitant", content=reply),
+            Message(user_id=user_id, role="user", content=payload.message),
+            Message(user_id=user_id, role="assistant", content=reply),
         ]
     )
     await db.commit()
     return ChatResponse(reply=reply)
 
-@router.get("/history/{user.id}", response_model=HistoryResponse)
+
+@router.get("/history", response_model=HistoryResponse)
 async def history(
-    user_id: str,
     limit: int = Query(50, ge=1, le=200),
+    user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> HistoryResponse:
     stmt = (
