@@ -1,103 +1,32 @@
-Chat API
+# Legal HR Agent API (Mốc 1: khung hệ thống)
 
-API chat xây bằng FastAPI, dự án học tập trong lộ trình trở thành AI Agent Engineer. Mục tiêu: backend có cấu trúc phân tầng rõ ràng, lưu lịch sử hội thoại vào database, có xác thực API key và test tự động.
+## Giới thiệu
+API chat nền tảng cho hệ thống agent pháp lý-nhân sự. Mốc 1 chỉ gồm: FastAPI,
+PostgreSQL, xác thực API key, lưu lịch sử theo người dùng.
 
-Tính năng
-[x] GET /health: kiểm tra server đang chạy
-[x] POST /chat: nhận tin nhắn, kiểm tra dữ liệu bằng Pydantic, trả về phản hồi
-[x] Cấu hình qua file .env (pydantic-settings)
-[x] Kết nối SQLite bất đồng bộ (SQLAlchemy + aiosqlite), model Message
-[ ] Lưu tin nhắn vào database và GET /history/{user_id}
-[ ] Xác thực bằng API key
-[ ] Unit test (pytest)
-[ ] PostgreSQL + Alembic + Docker
-[ ] Gọi LLM thật và streaming
-Công nghệ
+## Công nghệ
+Python 3.12, FastAPI, Pydantic, SQLAlchemy (async), PostgreSQL, Docker Compose, pytest
 
-Python, FastAPI, Uvicorn, Pydantic, SQLAlchemy (async), SQLite.
+## Chạy nhanh
+1. Sao chép `.env.example` thành `.env`, đặt mật khẩu cho PostgreSQL.
+2. `docker compose up -d --build`
+3. Tạo API key: `docker compose exec api python -m scripts.create_api_key <user_id>`
+4. Mở http://127.0.0.1:8000/docs, bấm Authorize và dán key.
 
-Cấu trúc thư mục
-ChatAPI_Project/
-├── app/
-│   ├── api/        # Các endpoint (routes)
-│   ├── core/       # Cấu hình, bảo mật
-│   ├── db/         # Kết nối database, session
-│   ├── models/     # ORM models (bảng trong DB)
-│   ├── schemas/    # Pydantic schemas (request/response)
-│   └── main.py     # Khởi tạo ứng dụng
-├── tests/          # Unit test
-├── .env.example    # File mẫu biến môi trường
-├── requirements.txt
-└── README.md
-Cài đặt
+## Endpoint
+| Method | Đường dẫn | Mô tả | Cần key |
+|---|---|---|---|
+| GET | /health | Kiểm tra dịch vụ | Không |
+| POST | /chat | Gửi tin nhắn, nhận phản hồi | Có |
+| GET | /history | Lịch sử của chính người gọi | Có |
 
-Yêu cầu: Python 3.10 trở lên.
+## Chạy test
+- Chạy môi trường ảo và vào thư mục chứa file gốc chạy "pytest -v"(nhớ run docker)
+- Nếu các test đều pass thì endpoint của bạn đúng
 
-powershell
-# 1. Clone project
-git clone <link-repo-cua-ban>
-cd ChatAPI_Project
+## Quyết định thiết kế
+- user_id suy ra từ API key, không nhận từ client.
+- API key được băm SHA-256 trước khi lưu.
 
-# 2. Tạo và kích hoạt môi trường ảo (Windows)
-python -m venv .venv
-.venv\Scripts\activate
-
-# 3. Cài thư viện
-pip install -r requirements.txt
-
-# 4. Tạo file .env từ file mẫu rồi chỉnh giá trị
-copy .env.example .env
-
-Nội dung .env:
-
-DATABASE_URL=sqlite+aiosqlite:///./chat.db
-API_KEY=your-api-key-here
-
-Không commit file .env lên GitHub.
-
-Chạy server
-
-Chạy từ thư mục gốc của project:
-
-powershell
-uvicorn app.main:app --reload
-Server: http://127.0.0.1:8000
-Tài liệu API tự sinh (Swagger): http://127.0.0.1:8000/docs
-
-Lần chạy đầu tiên sẽ tự tạo file chat.db cùng bảng messages.
-
-Ví dụ sử dụng
-
-Kiểm tra server
-
-GET /health
-json
-{ "status": "ok" }
-
-Gửi tin nhắn
-
-POST /chat
-
-Request:
-
-json
-{ "message": "hello" }
-
-Response:
-
-json
-{ "reply": "Chào bạn" }
-
-Gọi bằng PowerShell:
-
-powershell
-Invoke-RestMethod -Uri http://127.0.0.1:8000/chat -Method Post -ContentType "application/json" -Body '{"message":"hello"}'
-
-Nếu message rỗng hoặc sai kiểu dữ liệu, API trả về lỗi 422 kèm mô tả chi tiết.
-
-Lộ trình tiếp theo
-Lưu tin nhắn của user và bot vào database, thêm GET /history/{user_id}.
-Thêm xác thực API key và xử lý lỗi toàn cục.
-Viết test với pytest (database SQLite in-memory).
-Chuyển sang PostgreSQL chạy bằng Docker, quản lý migration bằng Alembic.
-Tích hợp LLM và trả lời dạng streaming.
+## Hạn chế hiện tại / việc tiếp theo
+- Phản hồi hiện là câu cố định, chưa gọi LLM. Mốc 2 sẽ thêm RAG.
